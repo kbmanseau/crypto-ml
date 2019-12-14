@@ -1,8 +1,9 @@
-# Stock Trading with Machine Learning
+# Crypto Trading with Machine Learning
 
 ## Overview
 
-A stock trading bot that uses machine learning to make price predictions.
+This repo is heavily influenced by: https://github.com/DarrellBest/stock-trading-ml
+I am using his work as a starting point for my project. I did not fork the repo because my goals are to evolve this project into something else
 
 ## Requirements
 
@@ -15,15 +16,11 @@ A stock trading bot that uses machine learning to make price predictions.
 -   tensorflow
 -   matplotlib
 
-## Documentation
-
-[Blog Post](https://yacoubahmed.me/blog/stock-prediction-ml)
-
-[Medium Article](https://medium.com/towards-data-science/getting-rich-quick-with-machine-learning-and-stock-market-predictions-696802da94fe)
 
 ## Train your own model
 
 1. Clone the repo
+2. Create a virtual environment `python -m venv.venv`
 2. Pip install the requirements `pip install -r requirements.txt`
 3. Save the stock price history to a csv file `python save_data_to_csv.py --help`
 4. Edit one of the model files to accept the symbol you want
