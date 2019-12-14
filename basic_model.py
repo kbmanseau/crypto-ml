@@ -29,6 +29,8 @@ print(ohlcv_test.shape)
 
 
 # model architecture
+bs = 1024
+e = 500
 
 lstm_input = tf.keras.layers.Input(shape=(history_points, 5), name='lstm_input')
 x = tf.keras.layers.LSTM(50, name='lstm_0')(lstm_input)
@@ -41,7 +43,7 @@ output = tf.keras.layers.Activation('linear', name='linear_output')(x)
 model = tf.keras.models.Model(inputs=lstm_input, outputs=output)
 adam = tf.keras.optimizers.Adam(lr=0.0005)
 model.compile(optimizer=adam, loss='mse')
-model.fit(x=ohlcv_train, y=y_train, batch_size=32, epochs=50, shuffle=True, validation_split=0.1)
+model.fit(x=ohlcv_train, y=y_train, batch_size=bs, epochs=e, shuffle=True, validation_split=0.1)
 
 
 # evaluation

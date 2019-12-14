@@ -7,30 +7,37 @@ from util import csv_to_dataset, history_points
 
 # dataset
 
-ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = csv_to_dataset('ETHUSDT-1h-data.csv')
+#File that will be used
+csv_path = "ETHUSDT-1h-data.csv"
 
-test_split = 0.9
-n = int(ohlcv_histories.shape[0] * test_split)
+#ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = csv_to_dataset('ETHUSDT-1h-data.csv')
+ohlcv_histories_train, ohlcv_histories_test, technical_indicators_train, technical_indicators_test, unscaled_y_test, y_train, y_test, y_normaliser, tech_ind_train, tech_ind_test = csv_to_dataset(csv_path)
 
-ohlcv_train = ohlcv_histories[:n]
-tech_ind_train = technical_indicators[:n]
-y_train = next_day_open_values[:n]
+#######################################
 
-ohlcv_test = ohlcv_histories[n:]
-tech_ind_test = technical_indicators[n:]
-y_test = next_day_open_values[n:]
+#test_split = 0.9
+#n = int(ohlcv_histories.shape[0] * test_split)
 
-unscaled_y_test = unscaled_y[n:]
+#ohlcv_train = ohlcv_histories[:n]
+#tech_ind_train = technical_indicators[:n]
+#y_train = next_day_open_values[:n]
+#
+#ohlcv_test = ohlcv_histories[n:]
+#tech_ind_test = technical_indicators[n:]
+#y_test = next_day_open_values[n:]
+#
+#unscaled_y_test = unscaled_y[n:]
 
-print(ohlcv_train.shape)
-print(ohlcv_test.shape)
-
+#######################################
 
 # model architecture
+bs = 1024
+e = 500
+
 
 # define two sets of inputs
 lstm_input = tf.keras.layers.Input(shape=(history_points, 5), name='lstm_input')
-dense_input = tf.keras.layers.Input(shape=(technical_indicators.shape[1],), name='tech_input')
+dense_input = tf.keras.layers.Input(shape=(technical_indicators_train.shape[1],), name='tech_input')
 
 # the first branch operates on the first input
 x = tf.keras.layers.LSTM(50, name='lstm_0')(lstm_input)
@@ -54,14 +61,17 @@ z = tf.keras.layers.Dense(1, activation="linear", name='dense_out')(z)
 model = tf.keras.models.Model(inputs=[lstm_branch.input, technical_indicators_branch.input], outputs=z)
 adam = tf.keras.optimizers.Adam(lr=0.0005)
 model.compile(optimizer=adam, loss='mse')
-model.fit(x=[ohlcv_train, tech_ind_train], y=y_train, batch_size=32, epochs=50, shuffle=True, validation_split=0.1)
+print(len(ohlcv_histories_train))
+print(len(tech_ind_train))
+print(len(y_train))
+model.fit(x=[ohlcv_histories_train, tech_ind_train], y=y_train, batch_size=bs, epochs=e, shuffle=True, validation_split=0.1)
 
 
 # evaluation
 
-y_test_predicted = model.predict([ohlcv_test, tech_ind_test])
+y_test_predicted = model.predict([ohlcv_histories_test, tech_ind_test])
 y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
-y_predicted = model.predict([ohlcv_histories, technical_indicators])
+y_predicted = model.predict([ohlcv_histories_train, technical_indicators_train])
 y_predicted = y_normaliser.inverse_transform(y_predicted)
 assert unscaled_y_test.shape == y_test_predicted.shape
 real_mse = np.mean(np.square(unscaled_y_test - y_test_predicted))
