@@ -1,7 +1,7 @@
-alpha_vantage
+python-binance
 pandas
 numpy
 sklearn
 keras
-tensorflow
+tensorflow-gpu
 matplotlib
