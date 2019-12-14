@@ -7,10 +7,16 @@ history_points = 50
 
 def csv_to_dataset(csv_path):
     data = pd.read_csv(csv_path)
-    data = data.drop('date', axis=1)
-    data = data.drop(0, axis=0)
 
-    data = data.values
+    #remove columns that are not needed
+    #timestamp, close_time, quote_av, trades, tb_base_av, tb_quote_av, ignore
+    data = data.drop('timestamp', axis=1)
+    data = data.drop('close_time', axis=1)
+    data = data.drop('quote_av', axis=1)
+    data = data.drop('trades', axis=1)
+    data = data.drop('tb_base_av', axis=1)
+    data = data.drop('tb_quote_av', axis=1)
+    data = data.drop('ignore', axis=1)
 
     data_normaliser = preprocessing.MinMaxScaler()
     data_normalised = data_normaliser.fit_transform(data)
@@ -20,7 +26,7 @@ def csv_to_dataset(csv_path):
     next_day_open_values_normalised = np.array([data_normalised[:, 0][i + history_points].copy() for i in range(len(data_normalised) - history_points)])
     next_day_open_values_normalised = np.expand_dims(next_day_open_values_normalised, -1)
 
-    next_day_open_values = np.array([data[:, 0][i + history_points].copy() for i in range(len(data) - history_points)])
+    next_day_open_values = np.array([data['open'][i + history_points].copy() for i in range(len(data) - history_points)])
     next_day_open_values = np.expand_dims(next_day_open_values, -1)
 
     y_normaliser = preprocessing.MinMaxScaler()
