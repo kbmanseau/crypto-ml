@@ -1,5 +1,7 @@
 import tensorflow as tf
 import numpy as np
+import datetime
+import os.path
 np.random.seed(4)
 tf.random.set_seed(4)
 from util import csv_to_dataset, history_points
@@ -44,7 +46,26 @@ z = tf.keras.layers.Dense(1, activation="linear", name='dense_out')(z)
 model = tf.keras.models.Model(inputs=[lstm_branch.input, technical_indicators_branch.input], outputs=z)
 adam = tf.keras.optimizers.Adam(lr=0.0005)
 model.compile(optimizer=adam, loss='mse')
-model.fit(x=[ohlcv_histories_train, tech_ind_train], y=y_train, batch_size=bs, epochs=e, shuffle=True, validation_split=0.1)
+
+#logging for tensorboard
+log_dir= os.path.join(
+    "logs",
+    "fit",
+    datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+)
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+model.fit(x=[ohlcv_histories_train, tech_ind_train],
+          y=y_train,
+          batch_size=bs,
+          epochs=e,
+          shuffle=True,
+          validation_split=0.1,
+          #validation_data=([ohlcv_histories_test, tech_ind_test], y_test),
+          callbacks=[tensorboard_callback]
+)
+
+#model.fit(x=[ohlcv_histories_train, tech_ind_train], y=y_train, batch_size=bs, epochs=e, shuffle=True, validation_split=0.1)
 
 
 # evaluation
