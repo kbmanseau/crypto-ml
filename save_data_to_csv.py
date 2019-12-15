@@ -5,7 +5,7 @@ import argparse
 import json
 from binance.client import Client
 from datetime import datetime
-from dateutil import parser
+from dateutil import parser as par
 
 def get_all_binance(symbol, kline_size, save = True):
     #https://medium.com/swlh/retrieving-full-historical-data-for-every-cryptocurrency-on-binance-bitmex-using-the-python-apis-27b47fd8137f
@@ -13,12 +13,11 @@ def get_all_binance(symbol, kline_size, save = True):
     #Only download new data instead of downloading the entire set every runtime
     def minutes_of_new_data(symbol, kline_size, data, client, source):
         if len(data) > 0:
-            old = parser.parse(data["timestamp"].iloc[-1])
+            old = par.parse(data["timestamp"].iloc[-1])
         elif source == "binance":
             old = datetime.strptime('1 Jan 2017', '%d %b %Y')
         if source == "binance":
-            new = pd.to_datetime(client.get_klines(symbol=symbol, interval=kline_size)[-1][0], unit='ms')
-        
+            new = pd.to_datetime(binance_client.get_klines(symbol=symbol, interval=kline_size)[-1][0], unit='ms')
         return old, new 
     
     ### API
