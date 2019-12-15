@@ -2,6 +2,7 @@ import pandas as pd
 import os.path
 import math
 import argparse
+import json
 from binance.client import Client
 from datetime import datetime
 from dateutil import parser
@@ -21,8 +22,9 @@ def get_all_binance(symbol, kline_size, save = True):
         return old, new 
     
     ### API
-    binance_api_key = 'Q5BProfZ8Mnn0DQ38MRXtOQfoAMDhavf9jlnpCf33a5vYJYF0jyzt7rh4kiMLHJK'
-    binance_api_secret = 'WFpDU8GRLj4Z5O0JrSgjzNPRbI0a3QNKpoNHCvNRXvCFAXHYKE8RPcbOgC9xDECe'
+    binance_creds = json.load(open('api.json', 'r'))
+    binance_api_key = binance_creds['key']
+    binance_api_secret = binance_creds['secret']
     binance_client = Client(api_key=binance_api_key, api_secret=binance_api_secret)
 
     #Variables

@@ -32,7 +32,7 @@ ohlcv_histories_train, ohlcv_histories_test, technical_indicators_train, technic
 
 # model architecture
 bs = 1024
-e = 500
+e = 1000
 
 
 # define two sets of inputs
@@ -93,6 +93,7 @@ pred = plt.plot(y_test_predicted[start:end], label='predicted')
 
 plt.legend(['Real', 'Predicted'])
 
+plt.savefig("test_data.png")
 plt.show()
 
 from datetime import datetime
