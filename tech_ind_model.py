@@ -11,16 +11,16 @@ from util import csv_to_dataset, history_points
 csv_path = "ETHUSDT-1h-data.csv"
 
 #ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = csv_to_dataset('ETHUSDT-1h-data.csv')
-ohlcv_histories_train, ohlcv_histories_test, technical_indicators_train, technical_indicators_test, unscaled_y_test, y_train, y_test, y_normaliser, tech_ind_train, tech_ind_test = csv_to_dataset(csv_path)
+ohlcv_histories_train, ohlcv_histories_test, unscaled_y_test, y_train, y_test, y_normaliser, tech_ind_train, tech_ind_test = csv_to_dataset(csv_path)
 
 # model architecture
 bs = 1024
-e = 4000
+e = 100
 
 
 # define two sets of inputs
 lstm_input = tf.keras.layers.Input(shape=(history_points, 5), name='lstm_input')
-dense_input = tf.keras.layers.Input(shape=(technical_indicators_train.shape[1],), name='tech_input')
+dense_input = tf.keras.layers.Input(shape=(tech_ind_train.shape[1],), name='tech_input')
 
 # the first branch operates on the first input
 x = tf.keras.layers.LSTM(50, name='lstm_0')(lstm_input)
@@ -51,7 +51,7 @@ model.fit(x=[ohlcv_histories_train, tech_ind_train], y=y_train, batch_size=bs, e
 
 y_test_predicted = model.predict([ohlcv_histories_test, tech_ind_test])
 y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
-y_predicted = model.predict([ohlcv_histories_train, technical_indicators_train])
+y_predicted = model.predict([ohlcv_histories_train, tech_ind_train])
 y_predicted = y_normaliser.inverse_transform(y_predicted)
 assert unscaled_y_test.shape == y_test_predicted.shape
 real_mse = np.mean(np.square(unscaled_y_test - y_test_predicted))
