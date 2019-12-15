@@ -109,3 +109,4 @@ venv.bak/
 .mypy_cache/
 books_read.png
 api.json
+test_data.png

@@ -13,26 +13,9 @@ csv_path = "ETHUSDT-1h-data.csv"
 #ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = csv_to_dataset('ETHUSDT-1h-data.csv')
 ohlcv_histories_train, ohlcv_histories_test, technical_indicators_train, technical_indicators_test, unscaled_y_test, y_train, y_test, y_normaliser, tech_ind_train, tech_ind_test = csv_to_dataset(csv_path)
 
-#######################################
-
-#test_split = 0.9
-#n = int(ohlcv_histories.shape[0] * test_split)
-
-#ohlcv_train = ohlcv_histories[:n]
-#tech_ind_train = technical_indicators[:n]
-#y_train = next_day_open_values[:n]
-#
-#ohlcv_test = ohlcv_histories[n:]
-#tech_ind_test = technical_indicators[n:]
-#y_test = next_day_open_values[n:]
-#
-#unscaled_y_test = unscaled_y[n:]
-
-#######################################
-
 # model architecture
 bs = 1024
-e = 1000
+e = 4000
 
 
 # define two sets of inputs
@@ -61,9 +44,6 @@ z = tf.keras.layers.Dense(1, activation="linear", name='dense_out')(z)
 model = tf.keras.models.Model(inputs=[lstm_branch.input, technical_indicators_branch.input], outputs=z)
 adam = tf.keras.optimizers.Adam(lr=0.0005)
 model.compile(optimizer=adam, loss='mse')
-print(len(ohlcv_histories_train))
-print(len(tech_ind_train))
-print(len(y_train))
 model.fit(x=[ohlcv_histories_train, tech_ind_train], y=y_train, batch_size=bs, epochs=e, shuffle=True, validation_split=0.1)
 
 
