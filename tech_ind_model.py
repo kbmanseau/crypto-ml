@@ -7,17 +7,20 @@ tf.random.set_seed(4)
 from util import csv_to_dataset, history_points
 
 
+
+
 # dataset
 
 #File that will be used
-csv_path = "ETHUSDT-1h-data.csv"
+#csv_path = "ETHUSDT-1d-data.csv"
+csv_path = "ETHBTC-1h-data.csv"
 
 #ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = csv_to_dataset('ETHUSDT-1h-data.csv')
 ohlcv_histories_train, ohlcv_histories_test, unscaled_y_test, y_train, y_test, y_normaliser, tech_ind_train, tech_ind_test = csv_to_dataset(csv_path)
 
 # model architecture
-bs = 1024
-e = 100
+bs = 2048
+e = 5000
 
 
 # define two sets of inputs
@@ -25,7 +28,7 @@ lstm_input = tf.keras.layers.Input(shape=(history_points, 5), name='lstm_input')
 dense_input = tf.keras.layers.Input(shape=(tech_ind_train.shape[1],), name='tech_input')
 
 # the first branch operates on the first input
-x = tf.keras.layers.LSTM(50, name='lstm_0')(lstm_input)
+x = tf.keras.layers.LSTM(history_points, name='lstm_0')(lstm_input)
 x = tf.keras.layers.Dropout(0.2, name='lstm_dropout_0')(x)
 lstm_branch = tf.keras.models.Model(inputs=lstm_input, outputs=x)
 
@@ -55,15 +58,20 @@ log_dir= os.path.join(
 )
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-model.fit(x=[ohlcv_histories_train, tech_ind_train],
+restore_model = True
+
+if(restore_model):
+    model = tf.keras.models.load_model('technical_model.h5')
+
+else:
+    model.fit(x=[ohlcv_histories_train, tech_ind_train],
           y=y_train,
           batch_size=bs,
           epochs=e,
           shuffle=True,
-          validation_split=0.1,
-          #validation_data=([ohlcv_histories_test, tech_ind_test], y_test),
+          validation_split=0.2,
           callbacks=[tensorboard_callback]
-)
+    )
 
 #model.fit(x=[ohlcv_histories_train, tech_ind_train], y=y_train, batch_size=bs, epochs=e, shuffle=True, validation_split=0.1)
 
@@ -75,6 +83,7 @@ y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
 y_predicted = model.predict([ohlcv_histories_train, tech_ind_train])
 y_predicted = y_normaliser.inverse_transform(y_predicted)
 assert unscaled_y_test.shape == y_test_predicted.shape
+
 real_mse = np.mean(np.square(unscaled_y_test - y_test_predicted))
 scaled_mse = real_mse / (np.max(unscaled_y_test) - np.min(unscaled_y_test)) * 100
 print(scaled_mse)

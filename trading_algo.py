@@ -1,25 +1,14 @@
 import numpy as np
-from keras.models import load_model
+import tensorflow as tf
 from util import csv_to_dataset, history_points
+from tech_ind_model import csv_path
 
-model = load_model('technical_model.h5')
+model = tf.keras.models.load_model('technical_model.h5')
 
-ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = csv_to_dataset('MSFT_daily.csv')
+ohlcv_histories_train, ohlcv_histories_test, unscaled_y_test, y_train, y_test, y_normaliser, tech_ind_train, tech_ind_test = csv_to_dataset(csv_path)
 
-test_split = 0.9
-n = int(ohlcv_histories.shape[0] * test_split)
 
-ohlcv_train = ohlcv_histories[:n]
-tech_ind_train = technical_indicators[:n]
-y_train = next_day_open_values[:n]
-
-ohlcv_test = ohlcv_histories[n:]
-tech_ind_test = technical_indicators[n:]
-y_test = next_day_open_values[n:]
-
-unscaled_y_test = unscaled_y[n:]
-
-y_test_predicted = model.predict([ohlcv_test, tech_ind_test])
+y_test_predicted = model.predict([ohlcv_histories_test, tech_ind_test])
 y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
 
 buys = []
@@ -30,7 +19,7 @@ start = 0
 end = -1
 
 x = -1
-for ohlcv, ind in zip(ohlcv_test[start: end], tech_ind_test[start: end]):
+for ohlcv, ind in zip(ohlcv_histories_test[start: end], tech_ind_test[start: end]):
     normalised_price_today = ohlcv[-1][0]
     normalised_price_today = np.array([[normalised_price_today]])
     price_today = y_normaliser.inverse_transform(normalised_price_today)
@@ -82,5 +71,6 @@ if len(sells) > 0:
 # pred = plt.plot(y_predicted[start:end], label='predicted')
 
 plt.legend(['Real', 'Predicted', 'Buy', 'Sell'])
+plt.savefig("basic_bot.png")
 
 plt.show()
