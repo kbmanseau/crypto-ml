@@ -4,7 +4,8 @@ import datetime
 import os.path
 np.random.seed(4)
 tf.random.set_seed(4)
-from util import csv_to_dataset, history_points
+from util import csv_to_dataset, history_points, scaler_x_filename, scaler_ti_filename, scaler_td_filename
+from sklearn.externals import joblib
 
 
 
@@ -13,14 +14,14 @@ from util import csv_to_dataset, history_points
 
 #File that will be used
 #csv_path = "ETHUSDT-1d-data.csv"
-csv_path = "ETHBTC-1h-data.csv"
+csv_path = "ETHUSDT-1d-data-td.csv"
 
 #ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = csv_to_dataset('ETHUSDT-1h-data.csv')
-ohlcv_histories_train, ohlcv_histories_test, unscaled_y_test, y_train, y_test, y_normaliser, tech_ind_train, tech_ind_test = csv_to_dataset(csv_path)
+ohlcv_histories_train, ohlcv_histories_test, y_train, y_test, tech_ind_train, tech_ind_test = csv_to_dataset(csv_path)
 
 # model architecture
-bs = 2048
-e = 5000
+bs = 1024
+e = 100000
 
 
 # define two sets of inputs
@@ -64,6 +65,7 @@ if(restore_model):
     model = tf.keras.models.load_model('technical_model.h5')
 
 else:
+    #print(ohlcv_histories_train)
     model.fit(x=[ohlcv_histories_train, tech_ind_train],
           y=y_train,
           batch_size=bs,
@@ -75,17 +77,23 @@ else:
 
 #model.fit(x=[ohlcv_histories_train, tech_ind_train], y=y_train, batch_size=bs, epochs=e, shuffle=True, validation_split=0.1)
 
+#Load in the scalers
+data_scaler = joblib.load(scaler_x_filename)
+tis_scaler = joblib.load(scaler_ti_filename)
+td_scaler = joblib.load(scaler_td_filename)
 
 # evaluation
 
 y_test_predicted = model.predict([ohlcv_histories_test, tech_ind_test])
-y_test_predicted = y_normaliser.inverse_transform(y_test_predicted)
+y_test_predicted = td_scaler.inverse_transform(y_test_predicted)
 y_predicted = model.predict([ohlcv_histories_train, tech_ind_train])
-y_predicted = y_normaliser.inverse_transform(y_predicted)
-assert unscaled_y_test.shape == y_test_predicted.shape
+y_predicted = td_scaler.inverse_transform(y_predicted)
+y_train = td_scaler.inverse_transform(y_train)
+y_test = td_scaler.inverse_transform(y_test)
+assert y_test.shape == y_test_predicted.shape
 
-real_mse = np.mean(np.square(unscaled_y_test - y_test_predicted))
-scaled_mse = real_mse / (np.max(unscaled_y_test) - np.min(unscaled_y_test)) * 100
+real_mse = np.mean(np.square(y_test - y_test_predicted))
+scaled_mse = real_mse / (np.max(y_test) - np.min(y_test)) * 100
 print(scaled_mse)
 
 import matplotlib.pyplot as plt
@@ -95,12 +103,11 @@ plt.gcf().set_size_inches(22, 15, forward=True)
 start = 0
 end = -1
 
-real = plt.plot(unscaled_y_test[start:end], label='real')
+real = plt.plot(y_test[start:end], label='real')
 pred = plt.plot(y_test_predicted[start:end], label='predicted')
 
-# real = plt.plot(unscaled_y[start:end], label='real')
-# pred = plt.plot(y_predicted[start:end], label='predicted')
-
+#real = plt.plot(y_train[start:end], label='real_train')
+#pred = plt.plot(y_predicted[start:end], label='predicted_train')
 plt.legend(['Real', 'Predicted'])
 
 plt.savefig("test_data.png")
